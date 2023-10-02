@@ -69,9 +69,9 @@ def get_new_average(dataframe, driver_averages, num):
 
             # Update the driver's average
             if old_average < new_average:
-                average = old_average - abs(pow((1 - new_average), num))
-            else:
                 average = old_average + abs(pow((1 - new_average), num))
+            else:
+                average = old_average - abs(pow((1 - new_average), num))
 
             # Create a new data entry for the updated driver
             new_data = {
@@ -114,7 +114,7 @@ check = 1
 
 
 # Iterate the counter and update the results DataFrame
-while counter < 30:
+while counter < 50:
     counter += 1
     new_results_df = get_new_average(new_results_df, driver_averages, counter)
 
@@ -125,6 +125,12 @@ driver_average_dict = new_results_df[["driver_name", "average"]].to_dict(
 )
 
 sorted_data = sorted(driver_average_dict, key=lambda x: x["average"])
+
+# Open a file for writing
+with open("driver_averages.txt", "w") as file:
+    # Iterate through the dictionary and write each entry as a separate line
+    for item in sorted_data:
+        file.write(f"Driver: {item['driver_name']}, Average: {item['average']}\n")
 
 # Print each player and their average in separate rows
 for item in sorted_data:
