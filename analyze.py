@@ -65,6 +65,7 @@ def get_new_average(dataframe, driver_averages, num):
                         result_list.append({"time": product, "tmId": tm_id})
                         total_time = product + total_time
                         counter += 1
+                        
             new_average = total_time / counter
 
             # Update the driver's average
@@ -72,6 +73,8 @@ def get_new_average(dataframe, driver_averages, num):
                 average = old_average + abs(pow((1 - new_average), num))
             else:
                 average = old_average - abs(pow((1 - new_average), num))
+                
+            
 
             # Create a new data entry for the updated driver
             new_data = {
@@ -94,12 +97,22 @@ def fix_json_string(json_str):
     return json_str.replace("'", '"')
 
 
+champions_list = ["hamilton","rosberg","alonso","raikkonen", "farina","fangio","ascari","hawthorn","brabham","hill","phil_hill","damon_hill","surtees","clark",
+                  "hulme","rindt","stewart","emerson_fittipaldi","hunt","lauda","mario_andretti","scheckter","keke_rosberg","piquet","senna","mansell","prost",
+                  "michael_schumacher","villeneuve_sr","hakkinen","button","max_verstappen","vettel"]
+
 # Create an empty DataFrame to store the updated results
 new_results_df = pd.DataFrame(columns=["driverid", "driver_name", "result", "average"])
 
 # Read the original results DataFrame and create a dictionary of driver averages
 results_df = pd.read_csv("driver_results.csv")
 driver_averages = {row["driverid"]: row["average"] for _, row in results_df.iterrows()}
+
+# Set an initial tolerance level
+tolerance = 1e-6  # 1e-6 means 6 decimal places
+
+# Initialize variables to store the previous driver averages
+prev_driver_averages = {}
 
 check = 0
 results_df["result"] = results_df["result"].apply(fix_json_string)
@@ -108,30 +121,47 @@ counter = 1
 # Get the initial updated results DataFrame
 new_results_df = get_new_average(results_df, driver_averages, counter)
 
-print(new_results_df)
-
 check = 1
 
 
 # Iterate the counter and update the results DataFrame
-while counter < 50:
+while counter < 40:
     counter += 1
     new_results_df = get_new_average(new_results_df, driver_averages, counter)
+    
+    # Create a flag to check if the averages have converged
+    averages_converged = True
+    
+    # Calculate the difference between current and previous averages
+    for driver_id, average in driver_averages.items():
+        prev_average = prev_driver_averages.get(driver_id, None)
+        if prev_average is not None and abs(average - prev_average) > tolerance:
+            averages_converged = False
+            break  # No need to check further if any average is still changing
 
+    # Update previous averages
+    prev_driver_averages = driver_averages.copy()
+    
+    # If averages have converged, exit the loop
+    if averages_converged:
+        break
 
 # Extract the "driver_name" and "average" columns from the final DataFrame
 driver_average_dict = new_results_df[["driver_name", "average"]].to_dict(
     orient="records"
 )
 
+
 sorted_data = sorted(driver_average_dict, key=lambda x: x["average"])
 
+sorted_data_filtered = [item for item in sorted_data if item['driver_name'].lower() in champions_list]
+
 # Open a file for writing
-with open("driver_averages.txt", "w") as file:
+"""with open("driver_averages.txt", "w") as file:
     # Iterate through the dictionary and write each entry as a separate line
-    for item in sorted_data:
-        file.write(f"Driver: {item['driver_name']}, Average: {item['average']}\n")
+    for item in sorted_data_filtered:
+        file.write(f"Driver: {item['driver_name']}, Average: {item['average']}\n")"""
 
 # Print each player and their average in separate rows
-for item in sorted_data:
+for item in sorted_data_filtered:
     print(f"Driver: {item['driver_name']}, Average: {item['average']}")
