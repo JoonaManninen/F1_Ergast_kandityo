@@ -1,3 +1,5 @@
+# Program which compares races times of driver to their teammate to get their level. Data is from Ergast Database
+# Made by: Joona Manninen
 import pandas as pd
 import warnings
 

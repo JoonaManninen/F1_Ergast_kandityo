@@ -1,3 +1,5 @@
+# Program which analyses driver comapred to their teammates using premade datasets
+# Made by: Joona Manninen
 import pandas as pd
 import json
 import warnings
@@ -104,9 +106,16 @@ champions_list = ["hamilton","rosberg","alonso","raikkonen", "farina","fangio","
 # Create an empty DataFrame to store the updated results
 new_results_df = pd.DataFrame(columns=["driverid", "driver_name", "result", "average"])
 
-# Read the original results DataFrame and create a dictionary of driver averages
+# Reading the dataframes from CSV files
 results_df = pd.read_csv("driver_results.csv")
+qualifying_results_df = pd.read_csv("driver_qualifying_results.csv")
+
 driver_averages = {row["driverid"]: row["average"] for _, row in results_df.iterrows()}
+qualifying_averages = {row["driverid"]: row["average"] for _, row in qualifying_results_df.iterrows()}
+
+# Getting driver data
+driver_info_df = pd.read_csv("drivers.csv")
+selected_columns = driver_info_df[["driverRef", "surname", "forename"]]
 
 # Set an initial tolerance level
 tolerance = 1e-6  # 1e-6 means 6 decimal places
@@ -116,16 +125,19 @@ prev_driver_averages = {}
 
 check = 0
 results_df["result"] = results_df["result"].apply(fix_json_string)
+qualifying_results_df["result"] = qualifying_results_df["result"].apply(fix_json_string)
+
 counter = 1
 
 # Get the initial updated results DataFrame
 new_results_df = get_new_average(results_df, driver_averages, counter)
+new_qualifying_results_df = get_new_average(qualifying_results_df, qualifying_averages, counter)
 
 check = 1
 
 
 # Iterate the counter and update the results DataFrame
-while counter < 40:
+while True:
     counter += 1
     new_results_df = get_new_average(new_results_df, driver_averages, counter)
     
@@ -145,16 +157,23 @@ while counter < 40:
     # If averages have converged, exit the loop
     if averages_converged:
         break
+    
+# Analyzing     
+
 
 # Extract the "driver_name" and "average" columns from the final DataFrame
 driver_average_dict = new_results_df[["driver_name", "average"]].to_dict(
     orient="records"
 )
 
-
 sorted_data = sorted(driver_average_dict, key=lambda x: x["average"])
 
 sorted_data_filtered = [item for item in sorted_data if item['driver_name'].lower() in champions_list]
+
+
+
+
+print(sorted_data_filtered)
 
 # Open a file for writing
 """with open("driver_averages.txt", "w") as file:
