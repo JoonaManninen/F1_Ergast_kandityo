@@ -64,17 +64,17 @@ def resulttime_to_seconds(row):
         # Checking if driver was lapped using statusId
         # StatusIds correspond as follows "11 = +1 Lap", "12 = +2 Laps", "13 = +3 Laps,"" "14 = +4 Laps", "15 = +5 Laps", "16 = +6 Laps", "17 = +7 Laps", "18 = +8 Laps", "19 = +9 Laps"
         # First we check if the statusId falls in the correct range
-        if (int(status) < 20 and int(status) > 10):
-        
+        if int(status) < 20 and int(status) > 10:
             base_time = race_results_dict.get(race_id)
             # Changing the fastest laptime to second for the calculation
             # Split the time string by ":"
+
             time_parts = fastestLap.split(":")
-            
+
             # Format: minutes:seconds.milliseconds
 
             # Some races don't have fastest laptimes so calculation cannot be done
-            if (time_parts[0] == "\\N"):
+            if time_parts[0] == "\\N":
                 return 0
             else:
                 seconds_milliseconds = time_parts[1].split(".")
@@ -83,7 +83,7 @@ def resulttime_to_seconds(row):
                     seconds_milliseconds[1]
                 )
                 fastLap = (minutes * 60) + seconds + (milliseconds / 1000)
-            
+
             # Calculating the estimated time that driver was behind the first finisher using fastest laptime.
             if int(status) == 11:
                 base_time = race_results_dict.get(race_id)
@@ -93,40 +93,14 @@ def resulttime_to_seconds(row):
                 base_time = race_results_dict.get(race_id)
                 base_time = int(base_time[0])
                 total_seconds = base_time + fastLap * 2
-            elif int(status) == 13:
-                base_time = race_results_dict.get(race_id)
-                base_time = int(base_time[0])
-                total_seconds = base_time + fastLap * 3             
-            elif int(status) == 14:
-                base_time = race_results_dict.get(race_id)
-                base_time = int(base_time[0])
-                total_seconds = base_time + fastLap * 4            
-            elif int(status) == 15:
-                base_time = race_results_dict.get(race_id)
-                base_time = int(base_time[0])
-                total_seconds = base_time + fastLap * 5               
-            elif int(status) == 16:
-                base_time = race_results_dict.get(race_id)
-                base_time = int(base_time[0])
-                total_seconds = base_time + fastLap * 6            
-            elif int(status) == 17:
-                base_time = race_results_dict.get(race_id)
-                base_time = int(base_time[0])
-                total_seconds = base_time + fastLap * 7                
-            elif int(status) == 18:
-                base_time = race_results_dict.get(race_id)
-                base_time = int(base_time[0])
-                total_seconds = base_time + fastLap * 8                
             else:
                 base_time = race_results_dict.get(race_id)
                 base_time = int(base_time[0])
-                total_seconds = base_time + fastLap * 9                
-            return total_seconds 
+                total_seconds = base_time + fastLap * 3
+            return total_seconds
         else:
             return 0
-    
-    
-    
+
     # Only race winners time in race is formatted like hours:minutes:second.milliseconds and other are formatted like +5.56.
     if race_id in race_results_dict:
         if time_str.startswith("+"):
@@ -243,13 +217,13 @@ def compare_times(driver_id, race_id, teammate_id, laptime_raceId):
         ]
         # When driver doesn't have result we return -1 and skip to the next iteration of loop.
         if driver_race_data.iloc[0]["time"] == 0:
-            return -1
+            return -2
 
         if (
             teammate_race_data.iloc[0]["time"] == 0
             and driver_race_data.iloc[0]["time"] != 0
         ):
-            return -1
+            return -3
 
         if not driver_race_data.empty:
             driver_finish_time = driver_race_data.iloc[0]["time"]
@@ -312,13 +286,17 @@ for i in range(len(unique_drivers)):
     # Loop through each race for the current driver
     for j in range(len(all_driver_races)):
         # Getting teammates id
+
         teammate_id = get_teammates(unique_drivers[i], all_driver_races[j])
 
         a = compare_times(
             unique_drivers[i], all_driver_races[j], teammate_id, unique_race_ids
         )
 
-        if a == -1:
+        if unique_drivers[i] == 579:
+            print(teammate_id, "kek", a, "homo", all_driver_races[j])
+
+        if a == -1 or -2 or -3:
             continue
 
         counter += 1

@@ -60,6 +60,7 @@ def get_new_average(dataframe, driver_averages, num):
                 # When driver has teammate
                 else:
                     tm_average = driver_averages.get(tm_id, None)
+
                     if tm_average is not None:
                         # Product is the drivers time multiplied by his teammate average.
                         product = time * tm_average
@@ -67,23 +68,20 @@ def get_new_average(dataframe, driver_averages, num):
                         result_list.append({"time": product, "tmId": tm_id})
                         total_time = product + total_time
                         counter += 1
-                        
-            new_average = total_time / counter
 
+            new_average = total_time / counter
             # Update the driver's average
             if old_average < new_average:
-                average = old_average + abs(pow((1 - new_average), num))
+                average = old_average + pow(abs(1 - new_average), num)
             else:
-                average = old_average - abs(pow((1 - new_average), num))
-                
-            
+                average = old_average - pow(abs(1 - new_average), num)
 
             # Create a new data entry for the updated driver
             new_data = {
                 "driverid": driver_id,
                 "driver_name": driver_name,
                 "result": result_list,
-                "average": average,
+                "average": round(average, 6),
             }
 
         warnings.simplefilter(action="ignore", category=FutureWarning)
@@ -99,9 +97,42 @@ def fix_json_string(json_str):
     return json_str.replace("'", '"')
 
 
-champions_list = ["hamilton","rosberg","alonso","raikkonen", "farina","fangio","ascari","hawthorn","brabham","hill","phil_hill","damon_hill","surtees","clark",
-                  "hulme","rindt","stewart","emerson_fittipaldi","hunt","lauda","mario_andretti","scheckter","keke_rosberg","piquet","senna","mansell","prost",
-                  "michael_schumacher","villeneuve_sr","hakkinen","button","max_verstappen","vettel"]
+champions_list = [
+    "hamilton",
+    "rosberg",
+    "alonso",
+    "raikkonen",
+    "farina",
+    "fangio",
+    "ascari",
+    "hawthorn",
+    "jack_brabham",
+    "hill",
+    "phil_hill",
+    "damon_hill",
+    "surtees",
+    "clark",
+    "hulme",
+    "rindt",
+    "stewart",
+    "emerson_fittipaldi",
+    "hunt",
+    "lauda",
+    "mario_andretti",
+    "scheckter",
+    "keke_rosberg",
+    "piquet",
+    "senna",
+    "mansell",
+    "prost",
+    "michael_schumacher",
+    "villeneuve",
+    "hakkinen",
+    "button",
+    "max_verstappen",
+    "vettel",
+    "jones",
+]
 
 # Create an empty DataFrame to store the updated results
 new_results_df = pd.DataFrame(columns=["driverid", "driver_name", "result", "average"])
@@ -111,76 +142,131 @@ results_df = pd.read_csv("driver_results.csv")
 qualifying_results_df = pd.read_csv("driver_qualifying_results.csv")
 
 driver_averages = {row["driverid"]: row["average"] for _, row in results_df.iterrows()}
-qualifying_averages = {row["driverid"]: row["average"] for _, row in qualifying_results_df.iterrows()}
-
+qualifying_averages = {
+    row["driverid"]: row["average"] for _, row in qualifying_results_df.iterrows()
+}
+# Fixing the result column
+results_df["result"] = results_df["result"].apply(fix_json_string)
+qualifying_results_df["result"] = qualifying_results_df["result"].apply(fix_json_string)
 # Getting driver data
 driver_info_df = pd.read_csv("drivers.csv")
 selected_columns = driver_info_df[["driverRef", "surname", "forename"]]
 
-# Set an initial tolerance level
-tolerance = 1e-6  # 1e-6 means 6 decimal places
-
-# Initialize variables to store the previous driver averages
-prev_driver_averages = {}
 
 check = 0
-results_df["result"] = results_df["result"].apply(fix_json_string)
-qualifying_results_df["result"] = qualifying_results_df["result"].apply(fix_json_string)
-
 counter = 1
 
 # Get the initial updated results DataFrame
 new_results_df = get_new_average(results_df, driver_averages, counter)
-new_qualifying_results_df = get_new_average(qualifying_results_df, qualifying_averages, counter)
+new_qualifying_results_df = get_new_average(
+    qualifying_results_df, qualifying_averages, counter
+)
+
+qualifying_averages = {
+    row["driverid"]: row["average"] for _, row in qualifying_results_df.iterrows()
+}
+
+driver_averages = {
+    row["driverid"]: row["average"] for _, row in new_results_df.iterrows()
+}
 
 check = 1
 
-
 # Iterate the counter and update the results DataFrame
-while True:
+while counter < 20:
     counter += 1
     new_results_df = get_new_average(new_results_df, driver_averages, counter)
-    
-    # Create a flag to check if the averages have converged
-    averages_converged = True
-    
-    # Calculate the difference between current and previous averages
-    for driver_id, average in driver_averages.items():
-        prev_average = prev_driver_averages.get(driver_id, None)
-        if prev_average is not None and abs(average - prev_average) > tolerance:
-            averages_converged = False
-            break  # No need to check further if any average is still changing
 
-    # Update previous averages
-    prev_driver_averages = driver_averages.copy()
-    
-    # If averages have converged, exit the loop
-    if averages_converged:
-        break
-    
-# Analyzing     
+    driver_averages = {
+        row["driverid"]: row["average"] for _, row in new_results_df.iterrows()
+    }
+
+merged_data = new_results_df.merge(
+    selected_columns, left_on="driver_name", right_on="driverRef", how="left"
+)
+new_results_df = new_results_df.sort_values(by="average", ascending=False)
 
 
-# Extract the "driver_name" and "average" columns from the final DataFrame
-driver_average_dict = new_results_df[["driver_name", "average"]].to_dict(
-    orient="records"
+# Filter the merged DataFrame to keep only drivers in the champions_list
+filtered_data = merged_data[merged_data["driver_name"].str.lower().isin(champions_list)]
+
+# Rename the columns if needed
+filtered_data = filtered_data.rename(
+    columns={
+        "forename": "Driver Forename",
+        "surname": "Driver Surname",
+        "average": "Average",
+    }
 )
 
-sorted_data = sorted(driver_average_dict, key=lambda x: x["average"])
+# Dropping useless columns
+filtered_data.drop(["driverRef"], axis=1, inplace=True)
+filtered_data.drop(["driverid"], axis=1, inplace=True)
+# Adding analyzed races column which shiws how many races was analyzed for each friver
+filtered_data["Analyzed_races"] = filtered_data["result"].apply(lambda x: len(x))
+filtered_data = filtered_data.sort_values(by="Average")
+# Reset the index after sorting
+filtered_data = filtered_data.reset_index(drop=True)
+filtered_data = filtered_data[
+    ["Driver Surname", "Driver Forename", "driver_name", "Average", "Analyzed_races"]
+]
+filtered_data = filtered_data[filtered_data["Analyzed_races"] > 35]
+filtered_data.to_csv("final_result_over_35.csv", index=False)
 
-sorted_data_filtered = [item for item in sorted_data if item['driver_name'].lower() in champions_list]
+print(filtered_data)
 
 
+##########################################
+# QUALIFYING TIMES
+##########################################
 
 
-print(sorted_data_filtered)
+counter = 1
+# Iterating qualifying times and calculating new averages.
+while counter < 15:
+    counter += 1
+    new_qualifying_results_df = get_new_average(
+        new_qualifying_results_df, qualifying_averages, counter
+    )
 
-# Open a file for writing
-"""with open("driver_averages.txt", "w") as file:
-    # Iterate through the dictionary and write each entry as a separate line
-    for item in sorted_data_filtered:
-        file.write(f"Driver: {item['driver_name']}, Average: {item['average']}\n")"""
+    qualifying_averages = {
+        row["driverid"]: row["average"]
+        for _, row in new_qualifying_results_df.iterrows()
+    }
 
-# Print each player and their average in separate rows
-for item in sorted_data_filtered:
-    print(f"Driver: {item['driver_name']}, Average: {item['average']}")
+
+merged_qualifying_data = new_qualifying_results_df.merge(
+    selected_columns, left_on="driver_name", right_on="driverRef", how="left"
+)
+
+# Filter the merged DataFrame to keep only drivers in the champions_list
+filtered_qualifying_data = merged_qualifying_data[
+    merged_qualifying_data["driver_name"].str.lower().isin(champions_list)
+]
+
+# Rename the columns if needed
+filtered_qualifying_data = filtered_qualifying_data.rename(
+    columns={
+        "forename": "Driver Forename",
+        "surname": "Driver Surname",
+        "average": "Average",
+    }
+)
+
+# Drop any redundant columns
+filtered_qualifying_data.drop(["driverRef"], axis=1, inplace=True)
+filtered_qualifying_data.drop(["driverid"], axis=1, inplace=True)
+filtered_qualifying_data["Analyzed_races"] = filtered_qualifying_data["result"].apply(
+    lambda x: len(x)
+)
+filtered_qualifying_data = filtered_qualifying_data.sort_values(by="Average")
+# Reset the index after sorting
+filtered_qualifying_data = filtered_qualifying_data.reset_index(drop=True)
+filtered_qualifying_data = filtered_qualifying_data[
+    ["Driver Surname", "Driver Forename", "driver_name", "Average", "Analyzed_races"]
+]
+
+print(filtered_qualifying_data)
+
+
+# filtered_data.to_csv("final_qualifying_results.csv", index=False)

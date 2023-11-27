@@ -8,7 +8,8 @@ import warnings
 def get_teammates(driver_id, race_id):
     # Filter the result data for the specified driverId and raceId
     driver_race_data = qualifying_data[
-        (qualifying_data["driverId"] == driver_id) & (qualifying_data["raceId"] == race_id)
+        (qualifying_data["driverId"] == driver_id)
+        & (qualifying_data["raceId"] == race_id)
     ]
 
     if not driver_race_data.empty:
@@ -45,18 +46,19 @@ def driver_races(driver):
 
 
 # Convert the time column to float representing seconds
-def time_to_seconds(time_str,):
-    
+def time_to_seconds(
+    time_str,
+):
     time_str = str(time_str)
-    
-    if time_str == 'nan':
+
+    if time_str == "nan":
         return 0
-    
+
     parts = time_str.split(":")
-    
+
     if parts[0] == "\\N":
         return 0
-    
+
     minutes = int(parts[0])
     seconds = float(parts[1])
     return minutes * 60 + seconds
@@ -64,44 +66,47 @@ def time_to_seconds(time_str,):
 
 # Function which makes the comparison between laptimes.
 def compare_times(driver_id, race_id, teammate_id):
+    if teammate_id == -1:
+        return -1
+    # Calculate race result times
+    driver_race_data = qualifying_data[
+        (qualifying_data["raceId"] == race_id)
+        & (qualifying_data["driverId"] == driver_id)
+    ]
+    teammate_race_data = qualifying_data[
+        (qualifying_data["raceId"] == race_id)
+        & (qualifying_data["driverId"] == teammate_id)
+    ]
+    # When driver doesn't have result we return -1 and skip to the next iteration of loop.
+    if driver_race_data.iloc[0]["q1"] == 0:
+        return -1
 
+    if teammate_race_data.iloc[0]["q1"] == 0 and driver_race_data.iloc[0]["q1"] != 0:
+        return -1
 
-        if teammate_id == -1:
-            return -1
-        # Calculate race result times
-        driver_race_data = qualifying_data[
-            (qualifying_data["raceId"] == race_id) & (qualifying_data["driverId"] == driver_id)
-        ]
-        teammate_race_data = qualifying_data[
-            (qualifying_data["raceId"] == race_id)
-            & (qualifying_data["driverId"] == teammate_id)
-        ]
-        # When driver doesn't have result we return -1 and skip to the next iteration of loop.
-        if driver_race_data.iloc[0]["q1"] == 0:
-            return -1
+    if not driver_race_data.empty:
+        # Taking the best qualifying time from driver
+        driver_finish_time = driver_race_data.iloc[0]["q1"]
 
-        if (
-            teammate_race_data.iloc[0]["q1"] == 0
-            and driver_race_data.iloc[0]["q1"] != 0
-        ):
-            return -1
+    else:
+        driver_finish_time = None
 
-        if not driver_race_data.empty:
-            driver_finish_time = driver_race_data.iloc[0]["q1"]
-        else:
-            driver_finish_time = None
+    if not teammate_race_data.empty:
+        # Taking the best qualifying time from teammate
+        teammate_finish_time = teammate_race_data.iloc[0]["q1"]
 
-        if not teammate_race_data.empty:
-            teammate_finish_time = teammate_race_data.iloc[0]["q1"]
-        else:
-            teammate_finish_time = None
+    else:
+        teammate_finish_time = None
 
-        if driver_finish_time is not None and teammate_finish_time is not None:
-            result = driver_finish_time / teammate_finish_time
-        else:
-            result = 1.0  # Default result if data is missing
+    if driver_finish_time is not None and teammate_finish_time is not None:
+        result = driver_finish_time / teammate_finish_time
+    else:
+        result = 1.0  # Default result if data is missing
 
-        return result
+    if result < 0.9 or result > 1.1:
+        return 1
+
+    return result
 
 
 # Function to get the driver's name based on driverId
@@ -126,6 +131,8 @@ qualifying_data = pd.read_csv("qualifying.csv")
 
 # Changing the "time" column data to seconds.
 qualifying_data["q1"] = qualifying_data["q1"].apply(time_to_seconds)
+qualifying_data["q2"] = qualifying_data["q2"].apply(time_to_seconds)
+qualifying_data["q3"] = qualifying_data["q3"].apply(time_to_seconds)
 
 # Get unique driver IDs
 unique_drivers = qualifying_data["driverId"].unique()
@@ -143,11 +150,10 @@ for i in range(len(unique_drivers)):
     # Loop through each race for the current driver
     for j in range(len(all_driver_races)):
         # Getting teammates id
+
         teammate_id = get_teammates(unique_drivers[i], all_driver_races[j])
 
-        a = compare_times(
-            unique_drivers[i], all_driver_races[j], teammate_id
-        )
+        a = compare_times(unique_drivers[i], all_driver_races[j], teammate_id)
 
         if a == -1:
             continue
