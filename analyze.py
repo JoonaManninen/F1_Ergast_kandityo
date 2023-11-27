@@ -269,4 +269,4 @@ filtered_qualifying_data = filtered_qualifying_data[
 print(filtered_qualifying_data)
 
 
-# filtered_data.to_csv("final_qualifying_results.csv", index=False)
+filtered_qualifying_data.to_csv("final_qualifying_results.csv", index=False)
