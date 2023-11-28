@@ -12,13 +12,21 @@ analyze.py is used to iterate through the data taken from driver_result.csv and 
 RESULTS
 
 Forename	Firstname	Average	Analyzed races
+
 Fangio	Juan	0.992707	16
+
 Button	Jenson	0.99403	291
+
 Ascari	Alberto	0.994388	11
+
 Hamilton	Lewis	0.994537	314
+
 Villeneuve	Jacques	0.995221	154
+
 Hunt	James	0.995442	9
+
 Hill	Damon	0.99555	72
+
 Prost	Alain	0.995624	56
 Surtees	John	0.995928	6
 Rindt	Jochen	0.995971	4
