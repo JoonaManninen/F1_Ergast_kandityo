@@ -170,6 +170,7 @@ def resulttime_to_seconds(row):
 
 
 # Function which makes the comparison between laptimes.
+# In case the results is over 1.2 or below 0.8 we don't count it. This is because in races the differences are not that big and there was propably some mechanical reason the results differences are that big.
 def compare_times(driver_id, race_id, teammate_id, laptime_raceId):
     if race_id in laptime_raceId:
         # Driver time
@@ -202,6 +203,9 @@ def compare_times(driver_id, race_id, teammate_id, laptime_raceId):
 
         result = dtime / tmtime
 
+        if result < 0.8 or result > 1.2:
+            return 1
+
         return result
     # Situation when the race doesn't have laptime data
     else:
@@ -217,13 +221,13 @@ def compare_times(driver_id, race_id, teammate_id, laptime_raceId):
         ]
         # When driver doesn't have result we return -1 and skip to the next iteration of loop.
         if driver_race_data.iloc[0]["time"] == 0:
-            return -2
+            return -1
 
         if (
             teammate_race_data.iloc[0]["time"] == 0
             and driver_race_data.iloc[0]["time"] != 0
         ):
-            return -3
+            return -1
 
         if not driver_race_data.empty:
             driver_finish_time = driver_race_data.iloc[0]["time"]
@@ -239,6 +243,9 @@ def compare_times(driver_id, race_id, teammate_id, laptime_raceId):
             result = driver_finish_time / teammate_finish_time
         else:
             result = 1.0  # Default result if data is missing
+
+        if result < 0.8 or result > 1.2:
+            return 1
 
         return result
 
@@ -293,10 +300,7 @@ for i in range(len(unique_drivers)):
             unique_drivers[i], all_driver_races[j], teammate_id, unique_race_ids
         )
 
-        if unique_drivers[i] == 579:
-            print(teammate_id, "kek", a, "homo", all_driver_races[j])
-
-        if a == -1 or -2 or -3:
+        if a == -1:
             continue
 
         counter += 1
