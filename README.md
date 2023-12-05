@@ -8,3 +8,4 @@ Laptimes.csv is used for races starting from 1996 and for races before 1996 we u
 
 Data is then written in driver_results.csv.
 analyze.py is used to iterate through the data taken from driver_result.csv and come to conclusion who would be the best driver.
+
