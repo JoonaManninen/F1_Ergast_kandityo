@@ -125,9 +125,9 @@ results_df = pd.DataFrame(columns=["driverid", "driver_name", "result", "average
 race_results_dict = {}
 
 # Read driver, lap time, and result data from CSV files
-driver_data = pd.read_csv("drivers.csv")
+driver_data = pd.read_csv("./data/drivers.csv")
 
-qualifying_data = pd.read_csv("qualifying.csv")
+qualifying_data = pd.read_csv("./data/qualifying.csv")
 
 # Changing the "time" column data to seconds.
 qualifying_data["q1"] = qualifying_data["q1"].apply(time_to_seconds)
@@ -186,7 +186,7 @@ for i in range(len(unique_drivers)):
     results_df = results_df.append(new_data, ignore_index=True)
 
 # Save the results DataFrame to a CSV file
-results_df.to_csv("driver_qualifying_results.csv", index=False)
+results_df.to_csv("./data/driver_qualifying_results.csv", index=False)
 
 # Print the results DataFrame
 print(results_df)

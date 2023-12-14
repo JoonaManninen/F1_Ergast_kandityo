@@ -138,8 +138,8 @@ champions_list = [
 new_results_df = pd.DataFrame(columns=["driverid", "driver_name", "result", "average"])
 
 # Reading the dataframes from CSV files
-results_df = pd.read_csv("driver_results.csv")
-qualifying_results_df = pd.read_csv("driver_qualifying_results.csv")
+results_df = pd.read_csv("./data/driver_results.csv")
+qualifying_results_df = pd.read_csv("./data/driver_qualifying_results.csv")
 
 driver_averages = {row["driverid"]: row["average"] for _, row in results_df.iterrows()}
 qualifying_averages = {
@@ -149,7 +149,7 @@ qualifying_averages = {
 results_df["result"] = results_df["result"].apply(fix_json_string)
 qualifying_results_df["result"] = qualifying_results_df["result"].apply(fix_json_string)
 # Getting driver data
-driver_info_df = pd.read_csv("drivers.csv")
+driver_info_df = pd.read_csv("./data/drivers.csv")
 selected_columns = driver_info_df[["driverRef", "surname", "forename"]]
 
 
@@ -210,8 +210,9 @@ filtered_data = filtered_data.reset_index(drop=True)
 filtered_data = filtered_data[
     ["Driver Surname", "Driver Forename", "driver_name", "Average", "Analyzed_races"]
 ]
+
 filtered_data = filtered_data[filtered_data["Analyzed_races"] > 35]
-filtered_data.to_csv("final_result_over_35.csv", index=False)
+filtered_data.to_csv("./results/final_results_over_35.csv", index=False)
 
 print(filtered_data)
 
@@ -269,4 +270,4 @@ filtered_qualifying_data = filtered_qualifying_data[
 print(filtered_qualifying_data)
 
 
-filtered_qualifying_data.to_csv("final_qualifying_results.csv", index=False)
+filtered_qualifying_data.to_csv("./results/final_qualifying_results.csv", index=False)

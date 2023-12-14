@@ -262,13 +262,13 @@ def get_driver_name(driver_id):
 # Create an empty DataFrame to store results
 results_df = pd.DataFrame(columns=["driverid", "driver_name", "result", "average"])
 
-# Initialize a dictionary to store raceId to base_result_str mappings
+# Initialize a dictionary to store raceId to base_result_str
 race_results_dict = {}
 
 # Read driver, lap time, and result data from CSV files
-driver_data = pd.read_csv("drivers.csv")
-lap_time_data = pd.read_csv("lap_times.csv")
-result_data = pd.read_csv("results.csv")
+driver_data = pd.read_csv("./data/drivers.csv")
+lap_time_data = pd.read_csv("./data/lap_times.csv")
+result_data = pd.read_csv("./data/results.csv")
 
 # Changing the "time" column data to seconds.
 lap_time_data["time"] = lap_time_data["time"].apply(time_to_seconds)
@@ -331,7 +331,7 @@ for i in range(len(unique_drivers)):
     results_df = results_df.append(new_data, ignore_index=True)
 
 # Save the results DataFrame to a CSV file
-results_df.to_csv("driver_results.csv", index=False)
+results_df.to_csv("./data/driver_results.csv", index=False)
 
 # Print the results DataFrame
 print(results_df)
